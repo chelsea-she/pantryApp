@@ -312,9 +312,8 @@ export default function Home() {
                 // border='2px solid #F2CC8F'
                 borderRadius={3}
                 padding={5}
-                key={name}>
-                  <img
-                    key={url} 
+                key={file.url}>
+                  <img 
                     src={file.url}
                     alt={file.name}
                     style={{ width: 'auto', height: '200px'}}
