@@ -4,7 +4,7 @@ import Link from 'next/link';
 import {useState, useEffect} from 'react'
 import {firestore} from '/firebase'
 import { storage } from '../firebase';
-import { ref, listAll, getDownloadURL } from 'firebase/storage';
+import { ref, listAll, getDownloadURL, deleteObject } from 'firebase/storage';
 import 
   {Box,
   Typography,
@@ -67,7 +67,7 @@ export default function Home() {
   const removeItem = async (item) => {
     if(user) {
       const docRef = doc(collection(firestore, user.email), item)
-    const docSnap = await getDoc(docRef)
+      const docSnap = await getDoc(docRef)
 
     if(docSnap.exists()){
       const {quantity} = docSnap.data()
@@ -83,6 +83,44 @@ export default function Home() {
     
   }
 
+  const addIMGItem = async (item) => {
+    if(user) {
+      const docRef = doc(collection(firestore, user.email+"IMG"), item)
+      const docSnap = await getDoc(docRef)
+  
+      if(docSnap.exists()){
+        const {quantity} = docSnap.data()
+        await setDoc(docRef, {quantity: quantity+1})
+      }
+      else{
+        await setDoc(docRef, {quantity: 1})
+      }
+
+      await fetchFiles();
+    }
+   
+  }
+
+  const removeIMGItem = async (item) => {
+    if(user) {
+      const docRef = doc(collection(firestore, user.email+"IMG"), item)
+      const docSnap = await getDoc(docRef)
+
+    if(docSnap.exists()){
+      const {quantity} = docSnap.data()
+      if (quantity === 1){
+        const fileRef = ref(storage, user.email+"/images/"+item);
+        await deleteObject(fileRef);
+        await deleteDoc(docRef)
+      }
+      else {
+        await setDoc(docRef, {quantity: quantity-1})
+      }
+    }
+
+    await fetchFiles();
+    }
+  }
   const [files, setFiles] = useState([]);
   const fetchFiles = async () => {
     if(user) {
@@ -92,8 +130,13 @@ export default function Home() {
       const fileUrls = await Promise.all(
         res.items.map(async (itemRef) => {
           const url = await getDownloadURL(itemRef);
-          return { name: itemRef.name, url };
+          const docRef = doc(collection(firestore, user.email+"IMG"), itemRef.name)
+          const docSnap = await getDoc(docRef)
+          const quantity = docSnap.data()
+          console.log(quantity)
+          return { name: itemRef.name, imgURL: url, count: quantity.quantity};
         })
+
       );
       setFiles(fileUrls);
     }
@@ -298,7 +341,7 @@ export default function Home() {
           }
 
           {
-            files.map((file) => (
+            files.map(({name, imgURL, count}) => (
               <Box
                 display='flex'
                 height='400px'
@@ -312,11 +355,10 @@ export default function Home() {
                 // border='2px solid #F2CC8F'
                 borderRadius={3}
                 padding={5}
-                key={file.url}>
+                key={name}>
                   <img 
-                    key={file.url}
-                    src={file.url}
-                    alt={file.name}
+                    src={imgURL}
+                    alt={name}
                     style={{ width: 'auto', height: '200px'}}
                     border-radius={3}
                   />
@@ -325,8 +367,9 @@ export default function Home() {
                     variant='h4'
                     color='white'
                     textAlign='center'
-                    fontWeight='200'>
-                      1
+                    fontWeight='200'
+                    >
+                      {count}
                   </Typography>
 
                   <Stack
@@ -336,7 +379,7 @@ export default function Home() {
                     variant='contained'
                     color='error'
                     onClick={() => {
-                      addItem()
+                      addIMGItem(name)
                     }}>
                       Add
                     </Button>
@@ -344,7 +387,7 @@ export default function Home() {
                     variant='contained'
                     color='error'
                     onClick={() => {
-                      removeItem(file.name)
+                      removeIMGItem(name)
                     }}>
                       Remove
                     </Button>

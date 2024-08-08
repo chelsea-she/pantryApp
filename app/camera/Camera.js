@@ -12,6 +12,8 @@ import
   Button
   } from '@mui/material';
 import { storage } from '/firebase';
+import {firestore} from '/firebase';
+import {collection, deleteDoc, doc, getDocs, getDoc, setDoc, query} from "firebase/firestore";
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import Image from "next/image";
 import { UserAuth } from '../context/AuthContext';
@@ -46,7 +48,7 @@ const Camera = () => {
 
     const [imageUrl, setImageUrl] = useState("")
     const randomNums = () => {
-        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890!@#$%^&*()_-+=~`{}[];:?<>/,."';
         let result = '';
         for (let i = 0; i < 9; i++) {
             const randomIndex = Math.floor(Math.random() * letters.length);
@@ -64,6 +66,9 @@ const Camera = () => {
                 const urlImg = await getDownloadURL(storageRef)
                 setImageUrl(urlImg)
                 // console.log("downloadable url >>>", url);
+
+                const docRef = doc(collection(firestore, user.email+"IMG"), letters)
+                await setDoc(docRef, {quantity: 1})
             } catch (error) {
                 console.log(error)
             }
