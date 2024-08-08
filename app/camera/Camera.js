@@ -11,7 +11,6 @@ import
   TextField,
   Button
   } from '@mui/material'
-import {firestore} from '@/firebase'
 import { storage } from '../firebase';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import Image from "next/image";
