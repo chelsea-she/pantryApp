@@ -15,7 +15,6 @@ import
   } from '@mui/material'
 import {collection, deleteDoc, doc, getDocs, getDoc, setDoc, query} from "firebase/firestore";
 import { UserAuth } from './context/AuthContext';
-import {useSearchParams} from 'next/navigation'
 
 export default function Home() {
   const [inventory, setInventory] = useState([]);
@@ -24,10 +23,10 @@ export default function Home() {
   const [loading,setLoading] = useState(true);
 
   const {user} = UserAuth();
-  const getItem = () => {
-    const searchParams=useSearchParams()
-    return(searchParams.get('url'))
-  };
+  // const getItem = () => {
+  //   const searchParams=useSearchParams()
+  //   return(searchParams.get('url'))
+  // };
   // let imageItemURL=getItem()
   // if !imageInventory.includes(imageItemURL) {
   //   imageInventory.push(imageItemURL)
@@ -312,7 +311,8 @@ export default function Home() {
                 bgcolor='#E07A5F'
                 // border='2px solid #F2CC8F'
                 borderRadius={3}
-                padding={5}>
+                padding={5}
+                key={name}>
                   <img
                     key={url} 
                     src={file.url}
