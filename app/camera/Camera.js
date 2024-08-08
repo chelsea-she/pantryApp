@@ -80,7 +80,7 @@ const Camera = () => {
             p={5}>
         <Webcam 
             ref={webcamRef}
-            audio={true}
+            audio={false}
             screenshotFormat="image/jpeg"
             videoConstraints={videoConstraints}
             onUserMedia={onUserMedia}

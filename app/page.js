@@ -314,6 +314,7 @@ export default function Home() {
                 padding={5}
                 key={file.url}>
                   <img 
+                    key={file.url}
                     src={file.url}
                     alt={file.name}
                     style={{ width: 'auto', height: '200px'}}
