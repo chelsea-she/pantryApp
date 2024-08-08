@@ -10,8 +10,8 @@ import
   Modal,
   TextField,
   Button
-  } from '@mui/material'
-import { storage } from '../firebase';
+  } from '@mui/material';
+import { storage } from '/firebase';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import Image from "next/image";
 import { UserAuth } from '../context/AuthContext';
