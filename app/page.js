@@ -1,95 +1,364 @@
+'use client'
 import Image from "next/image";
-import styles from "./page.module.css";
+import Link from 'next/link';
+import {useState, useEffect} from 'react'
+import {firestore} from '@/firebase'
+import { storage } from '../firebase';
+import { ref, listAll, getDownloadURL } from 'firebase/storage';
+import 
+  {Box,
+  Typography,
+  Stack,
+  Modal,
+  TextField,
+  Button
+  } from '@mui/material'
+import {collection, deleteDoc, doc, getDocs, getDoc, setDoc, query} from "firebase/firestore";
+import { UserAuth } from './context/AuthContext';
+import {useSearchParams} from 'next/navigation'
 
 export default function Home() {
+  const [inventory, setInventory] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [itemName, setItemName] = useState('');
+  const [loading,setLoading] = useState(true);
+
+  const {user} = UserAuth();
+  const getItem = () => {
+    const searchParams=useSearchParams()
+    return(searchParams.get('url'))
+  };
+  // let imageItemURL=getItem()
+  // if !imageInventory.includes(imageItemURL) {
+  //   imageInventory.push(imageItemURL)
+  // }
+
+  const updateInventory = async () => {
+    if(user){
+      const snapshot = query(collection(firestore, user.email))
+    const docs = await getDocs(snapshot)
+    const inventoryList = []
+    docs.forEach((doc)=> {
+      inventoryList.push({
+        name: doc.id,
+        ...doc.data(),
+      })
+    })
+    setInventory(inventoryList)
+    }
+    }
+
+  const addItem = async (item) => {
+    if(user) {
+      const docRef = doc(collection(firestore, user.email), item)
+      const docSnap = await getDoc(docRef)
+  
+      if(docSnap.exists()){
+        const {quantity} = docSnap.data()
+        await setDoc(docRef, {quantity: quantity+1})
+      }
+      else{
+        await setDoc(docRef, {quantity: 1})
+      }
+      await updateInventory()
+    }
+   
+  }
+
+  const removeItem = async (item) => {
+    if(user) {
+      const docRef = doc(collection(firestore, user.email), item)
+    const docSnap = await getDoc(docRef)
+
+    if(docSnap.exists()){
+      const {quantity} = docSnap.data()
+      if (quantity === 1){
+        await deleteDoc(docRef)
+      }
+      else {
+        await setDoc(docRef, {quantity: quantity-1})
+      }
+    }
+    await updateInventory()
+    }
+    
+  }
+
+  const [files, setFiles] = useState([]);
+  const fetchFiles = async () => {
+    if(user) {
+      const listRef = ref(storage, user.email+"/images"); // Specify your directory path here
+      const res = await listAll(listRef); // List all items in the directory
+
+      const fileUrls = await Promise.all(
+        res.items.map(async (itemRef) => {
+          const url = await getDownloadURL(itemRef);
+          return { name: itemRef.name, url };
+        })
+      );
+      setFiles(fileUrls);
+    }
+  }
+
+  useEffect(() => {
+    updateInventory()
+    fetchFiles()
+    const checkAuthentication = async () => {
+      await new Promise((resolve) => setTimeout(resolve,50));
+      setLoading(false);
+    };
+    checkAuthentication();
+  }, [user])
+
+  const handleOpen = () => setOpen(true)
+  const handleClose = () => setOpen(false)
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <Box
+      width='100vw'
+      display='flex'
+      flexDirection='column'
+      justifyContent='center'
+      alignItems='center'
+      py={3}
+      gap={3}>
+        {loading ? (
+                <Typography>Loading...</Typography>
+            ) : user ? (
+              <Box
+              width='100vw'
+              display='flex'
+              flexDirection='column'
+              justifyContent='center'
+              alignItems='center'
+              py={3}
+              gap={3}>
+        <Box
+          display='flex'
+          flexDirection='column'
+          justifyContent='center'
+          alignItems='center'
+          gap={3}>
+        <Button 
+          width='200px'
+          variant='contained'
+          size='large'
+          p={2}
+          margin-top={3}
+          onClick={() => {
+            handleOpen()
+          }}>
+            Add New Item
+          </Button>
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+          <Link href='/camera'>
+          <Button 
+          width='400px'
+          variant='contained'
+          size='large'
+          p={2}
+          margin-top={3}>
+            Add New Item with Photo
+          </Button></Link>
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
+          <Link href='/openai'>
+          <Button 
+          width='400px'
+          variant='contained'
+          size='large'
+          p={2}
+          margin-top={3}>
+            Add New Item with AI
+          </Button></Link>
+        </Box>
+        <Modal open={open} onClose={handleClose}>
+          <Box
+            position='absolute'
+            top='50%'
+            left='50%'
+            sx={{
+              transform:'translate(-50%,-50%)',
+            }}
+            width={400}
+            bgcolor='white'
+            border='2px solid #0000'
+            boxShadow={24}
+            p={4}
+            display='flex'
+            flexDirection='column'
+            gap={3}>
+              <Typography variant="h6">Add Item</Typography>
+              <Stack width='100%' direction='row' spacing={2}>
+                <TextField 
+                  variant='outlined'
+                  fullWidth
+                  value={itemName}
+                  onChange={(e) => {
+                    setItemName(e.target.value)
+                  }}>
+                  </TextField>
+                  <Button 
+                      variant='outlined'
+                      onClick={() => {
+                        addItem(itemName)
+                        setItemName('')
+                        handleClose()
+                      }}>
+                        Add
+                    </Button>
+              </Stack>
+          </Box>
+        </Modal>
+          <Box
+          width='800px'
+          height='100px'
+          bgcolor='#F2CC8F'
+          display='flex'
+          alignItems='center'
+          justifyContent='center'
+          borderRadius={4}>
+            <Typography 
+              variant='h2' 
+              color='white'>
+              Inventory Items
+            </Typography>
+          </Box>
+        <Stack 
+          width='100vw' 
+          height='300px' 
+          space={2} 
+          display='flex'
+          flexDirection='row' 
+          justifyContent='start'
+          flexWrap='wrap'
+          gap={3}
+          px={3}>
+          {
+            inventory.map(({name,quantity}) => (
+              <Box
+                key={name}
+                display='flex'
+                height='200px'
+                minWidth='400px'
+                maxWidth='400px'
+                flexDirection='column'
+                alignItems='center'
+                justifyContent='space-between'
+                p={2}
+                bgcolor='#E07A5F'
+                // border='2px solid #F2CC8F'
+                borderRadius={3}
+                padding={5}>
+                  <Stack
+                    direction='row'
+                    spacing={2}>
+                  <Typography
+                    variant='h4'
+                    color='white'
+                    textAlign='center'
+                    fontWeight='200'>
+                      {name.charAt(0).toUpperCase()+name.slice(1)} 
+                  </Typography>
+                  <Typography
+                  variant='h4'
+                  color='white'
+                  textAlign='center'
+                  fontWeight='200'>
+                    -- 
+                  </Typography>
+                  <Typography
+                    variant='h4'
+                    color='white'
+                    textAlign='center'
+                    fontWeight='200'>
+                      {quantity}
+                  </Typography>
+                  </Stack>
+                  <Stack
+                    direction='row'
+                    spacing={2}>
+                  <Button 
+                    variant='contained'
+                    color='error'
+                    onClick={() => {
+                      addItem(name)
+                    }}>
+                      Add
+                    </Button>
+                  <Button 
+                    variant='contained'
+                    color='error'
+                    onClick={() => {
+                      removeItem(name)
+                    }}>
+                      Remove
+                    </Button>
+                    </Stack>
+                </Box>
+            ))
+          }
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
+          {
+            files.map((file) => (
+              <Box
+                display='flex'
+                height='400px'
+                minWidth='400px'
+                maxWidth='400px'
+                flexDirection='column'
+                alignItems='center'
+                justifyContent='space-between'
+                p={2}
+                bgcolor='#E07A5F'
+                // border='2px solid #F2CC8F'
+                borderRadius={3}
+                padding={5}>
+                  <img
+                    src={file.url}
+                    alt={file.name}
+                    style={{ width: 'auto', height: '200px'}}
+                    border-radius={3}
+                  />
+                  
+                  <Typography
+                    variant='h4'
+                    color='white'
+                    textAlign='center'
+                    fontWeight='200'>
+                      1
+                  </Typography>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+                  <Stack
+                    direction='row'
+                    spacing={2}>
+                  <Button 
+                    variant='contained'
+                    color='error'
+                    onClick={() => {
+                      addItem()
+                    }}>
+                      Add
+                    </Button>
+                  <Button 
+                    variant='contained'
+                    color='error'
+                    onClick={() => {
+                      removeItem(file.name)
+                    }}>
+                      Remove
+                    </Button>
+                    </Stack>
+                </Box>
+            ))
+          }
+        </Stack>
+        </Box>) : (
+          <Typography
+          color='#3D405B'
+          fontWeight='800'
+          variant='h5'>Please log in to access your inventory.</Typography>
+      )}
+    {/* <Typography variant="h1">Inventory Management</Typography> */}
+    </Box>
+  )
 }
