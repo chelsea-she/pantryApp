@@ -10,7 +10,7 @@ import
   } from '@mui/material';
 import {CldImage, CldUploadButton} from 'next-cloudinary';
 import Link from 'next/link';
-import {firestore} from '@/firebase'
+import {firestore} from '/firebase'
 import {collection, deleteDoc, doc, getDocs, getDoc, setDoc, query} from "firebase/firestore";
 import { UserAuth } from '../context/AuthContext';
 // const answer=createContext();

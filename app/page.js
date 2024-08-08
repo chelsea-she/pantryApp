@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from 'next/link';
 import {useState, useEffect} from 'react'
-import {firestore} from '@/firebase'
+import {firestore} from '/firebase'
 import { storage } from '../firebase';
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
 import 
