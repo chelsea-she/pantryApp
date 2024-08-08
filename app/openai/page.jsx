@@ -11,7 +11,7 @@ import
 import {CldImage, CldUploadButton} from 'next-cloudinary';
 import Cloudinary from './imageClassification';
 
-const page = () => {
+const Page = () => {
 
     return(
       <Box>
@@ -20,5 +20,5 @@ const page = () => {
     )
 }
 
-export default page
+export default Page
 

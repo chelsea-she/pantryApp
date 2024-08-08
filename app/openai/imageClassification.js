@@ -77,12 +77,7 @@ const addItem = async (item) => {
         fontWeight='800'>
         {item}
       </Typography>
-      <Link href={{
-        pathname: "/",
-        query: {
-            url: uploadResults?.public_id
-        }
-        }}>
+      <Link href="/">
       <Button
           variant='contained'
           size='large'

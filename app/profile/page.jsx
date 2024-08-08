@@ -10,7 +10,7 @@ import
   Button
   } from '@mui/material'
 
-const page = () => {
+const Page = () => {
     const {user} = UserAuth()
     const [loading,setLoading] = useState(true);
 
@@ -46,4 +46,4 @@ const page = () => {
     )
 }
 
-export default page
+export default Page;

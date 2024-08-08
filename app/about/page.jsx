@@ -8,7 +8,7 @@ import
   Button
   } from '@mui/material'
 
-const page = () => {
+const Page = () => {
     return (
         <Box
             width='100vw'
@@ -37,4 +37,4 @@ const page = () => {
     )
 }
 
-export default page
+export default Page

@@ -11,7 +11,7 @@ import
 import AllCameras from './AllCameras'
 import Camera from './Camera'
 
-const page = () => {
+const Page = () => {
     return(
         <Box>
             <Camera/>
@@ -19,4 +19,4 @@ const page = () => {
     )
 }
 
-export default page
+export default Page
